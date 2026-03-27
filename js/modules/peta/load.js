@@ -5,7 +5,10 @@ function loadPeta() {
   setPage('Peta Pemetaan Kawasan Pedestrian','Peta wilayah & rute patroli Satlinmas');
   sbClose(); dChart('bar'); dChart('dnt'); dChart('tw');
   G('ct').classList.add('peta-outer-pa');
-  _injectPetaStyles(); _destroyLeaflet();
+  _injectPetaStyles(); 
+  _destroyLeaflet();
+  /* Pastikan cleanup selesai sebelum rendering UI baru */
+  setTimeout(function(){_completedPetaCleanup=true;},50);
   document.removeEventListener('keydown', _onKeyEsc);
 
   var h = '<div class="fu peta-container" id="peta-main-wrap" style="padding:0!important;position:relative">'

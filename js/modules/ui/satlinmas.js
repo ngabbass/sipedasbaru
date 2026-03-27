@@ -4,6 +4,8 @@
 //  Sesudah: apiGet('getSatlinmas').then(fn)
 // ══════════════════════════════════════════
 function loadSatlinmas(){
+  /* Cleanup maps jika aktif sebelum load halaman lain */
+  if(window._ensureMapCleanup) _ensureMapCleanup();
   setNav('sl'); setPage('Data Satlinmas','Daftar anggota'); sbClose();
   _slmFNama=''; _slmFUnit='';
 

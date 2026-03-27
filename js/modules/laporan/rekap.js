@@ -4,6 +4,8 @@
 //  Sesudah: apiGet('getRekap', params).then(fn)
 // ══════════════════════════════════════════
 function loadRekap(){
+  /* Cleanup maps jika aktif sebelum load halaman lain */
+  if(window._ensureMapCleanup) _ensureMapCleanup();
   setNav('rk'); setPage('Rekap Laporan','Data laporan patroli'); sbClose();
   dChart('bar'); dChart('dnt'); _rPg=1; _rFQ=''; _rFFrom=''; _rFTo='';
 

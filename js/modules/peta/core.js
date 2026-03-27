@@ -47,6 +47,8 @@ var _pickCoordMode      = false;
 var _pickTempMarker     = null;
 var _currentBaseLayer   = null;
 var _navPanelOpen       = false;
+var _completedPetaCleanup = false;
+var _petaInitInProgress = false;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  STATE PDF
@@ -515,13 +517,30 @@ function _injectPetaStyles() {
 function _destroyLeaflet() {
   _cancelPickCoord();
   if (_activeDrawHandler) { try { _activeDrawHandler.disable(); } catch(e){} _activeDrawHandler = null; }
-  if (_lfMap) { try { _lfMap.off(); _lfMap.remove(); } catch(e){} _lfMap = null; }
+  if (_lfMap) { 
+    try { 
+      _lfMap.off(); 
+      _lfMap.remove(); 
+    } catch(e){} 
+    _lfMap = null; 
+  }
   _lfMarkersLP=[]; _lfMarkersDF=[]; _lfLayerGroupDF=null;
   _lfLocateMarker=null; _lfLocateCircle=null;
   _drawnItems=null; _drawControl=null; _activeDrawMode=null;
   _drawPanelOpen=false; _drawnMeta={}; _pendingLayer=null; _pendingLayerType=null;
   _dfRawData=[]; _dfVisible=false; _dfGroupFilter=null; _dfStreetPanelOpen=false;
   _lyrPhotoOpen=false; _currentBaseLayer=null; _currentLayerCenter=null;
+  _petaInitInProgress=false;
+  _completedPetaCleanup=false;
+}
+
+// Helper untuk cleanup Leaflet yang lebih robust
+function _ensureMapCleanup() {
+  if (_lfMap || _activeDrawHandler) {
+    _destroyLeaflet();
+    return true;
+  }
+  return false;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

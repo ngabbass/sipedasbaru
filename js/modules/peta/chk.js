@@ -563,6 +563,8 @@ function onPetaFrameLoad(){
   var sh=G('peta-shimmer'),fr=G('peta-frame');
   if(sh) sh.classList.add('hidden');
   if(fr) fr.style.opacity='1';
+  /* Force iframe focus untuk memastikan state */
+  setTimeout(function(){ if(fr && fr.contentWindow) fr.contentWindow.focus(); },200);
 }
 
 function togglePetaFullscreen(){
@@ -587,6 +589,7 @@ function reloadPetaFrame(){
   if(!fr){ toast('Frame tidak ditemukan.','er'); return; }
   if(sh) sh.classList.remove('hidden');
   fr.style.opacity='0'; fr.src='';
+  /* Restart iframe load setelah delay */
   setTimeout(function(){fr.src=PETA_EMBED_URL;},100);
 }
 
@@ -602,13 +605,22 @@ function switchPetaMode(mode){
     if(bEL)  bEL.style.display='none';     if(bPR) bPR.style.display='none';
     if(bOM)  bOM.style.display='';
     closeDrawPanel();
+    /* Cek iframe, reload jika belum load */
+    var fr=G('peta-frame');
+    if(fr && (!fr.src || fr.src.indexOf('blank')!==-1 || parseFloat(fr.style.opacity||0)<1)){
+      setTimeout(reloadPetaFrame,100);
+    }
   } else {
     if(btnLF) btnLF.classList.add('on');    if(btnMM) btnMM.classList.remove('on');
     if(wMM)  wMM.style.display='none';     if(wLF) wLF.style.display='';
     if(bEL)  bEL.style.display='';         if(bPR) bPR.style.display='';
     if(bOM)  bOM.style.display='none';
-    if(!_lfMap) _initLeaflet();
-    else setTimeout(function(){ if(_lfMap) _lfMap.invalidateSize({animate:false}); },80);
+    if(!_lfMap) {
+      _petaInitInProgress=true;
+      _initLeaflet();
+    } else { 
+      setTimeout(function(){ if(_lfMap) _lfMap.invalidateSize({animate:false}); },80);
+    }
   }
 }
 
@@ -634,22 +646,39 @@ function closeDrawPanel(){
 //  LEAFLET INIT
 // ══════════════════════════════════════════════════════════════════════════════
 function _ensureLeafletLoaded(cb){
-  if(window.L&&window.L.Draw){cb();return;}
+  if(window.L&&window.L.Draw&&window.L.LatLng){cb();return;}
   function lC(h,i){if(document.getElementById(i))return;var l=document.createElement('link');l.id=i;l.rel='stylesheet';l.href=h;document.head.appendChild(l);}
-  function lS(s,fn){var e=document.createElement('script');e.src=s;e.onload=fn;document.head.appendChild(e);}
+  function lS(s,fn){if(document.querySelector('script[src="'+s+'"]')){fn();return;}
+    var e=document.createElement('script');e.src=s;e.onload=fn;e.onerror=function(){console.error('Failed to load:',s);fn()};document.head.appendChild(e);}
   lC('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','lf-css');
   lC('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css','lf-draw-css');
-  if(!window.L) lS('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',function(){lS('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js',cb);});
+  if(!window.L) lS('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',function(){
+    lS('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js',cb);
+  });
   else lS('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js',cb);
 }
 
 function _initLeaflet(){
+  if(_petaInitInProgress) return; /* Prevent double-init */
+  _petaInitInProgress=true;
   _ensureLeafletLoaded(function(){
-    var md=G('lf-map-div'); if(!md) return;
+    var md=G('lf-map-div'); 
+    if(!md) { _petaInitInProgress=false; return; }
+    
+    /* Ensure cleanup sebelum reinit */
     if(_lfMap){
-      if(!document.body.contains(_lfMap.getContainer())){try{_lfMap.off();_lfMap.remove();}catch(e){}_lfMap=null;}
-      else{setTimeout(function(){if(_lfMap) _lfMap.invalidateSize({animate:false});},80);refreshLeaflet();return;}
+      var container=_lfMap.getContainer();
+      if(!document.body.contains(container)){
+        try{_lfMap.off();_lfMap.remove();}catch(e){}_lfMap=null;
+      }
+      else{
+        _petaInitInProgress=false;
+        setTimeout(function(){if(_lfMap) _lfMap.invalidateSize({animate:false});},80);
+        refreshLeaflet();
+        return;
+      }
     }
+    
     _lfMap=L.map('lf-map-div',{center:PETA_CENTER,zoom:PETA_ZOOM,zoomControl:false,attributionControl:true});
 
     var osmL=L.tileLayer(TILE_LAYERS.osm.url,       {attribution:TILE_LAYERS.osm.attr,       maxZoom:19,crossOrigin:true});
@@ -709,6 +738,7 @@ function _initLeaflet(){
     _addDefaultMarker();
     refreshLeaflet();
     loadDrawings();
+    _petaInitInProgress=false; /* Mark init as complete */
   });
 }
 

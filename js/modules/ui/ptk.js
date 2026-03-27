@@ -42,6 +42,8 @@ function togglePtkMenu(btn){
   if(!isOpen){detail.classList.add('on');btn.classList.add('open');}
 }
 function loadPetunjuk(){
+  /* Cleanup maps jika aktif sebelum load halaman lain */
+  if(window._ensureMapCleanup) _ensureMapCleanup();
   setNav('ptk');setPage('Petunjuk Teknis','Panduan fitur & penggunaan SI-PEDAS');sbClose();
   dChart('bar');dChart('dnt');
   G('ct').innerHTML='<div class="fu">'+renderPetunjukWidget()+'</div>';

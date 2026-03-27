@@ -5,6 +5,8 @@
 // ══════════════════════════════════════════
 function loadEdit(){
   if(SES&&SES.role!=='admin'){toast('Akses ditolak.','er');return;}
+  /* Cleanup maps jika aktif sebelum load halaman lain */
+  if(window._ensureMapCleanup) _ensureMapCleanup();
   setNav('ed'); setPage('Edit Laporan','Kelola data laporan'); sbClose();
   dChart('bar'); dChart('dnt'); _rPg=1; _rFQ=''; _rFFrom=''; _rFTo='';
 

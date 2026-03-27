@@ -11,7 +11,7 @@
 <link rel="shortcut icon" href="/assets/icon-32.png">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 <!-- CSS -->
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -51,6 +51,38 @@
     if (jobs[k]) jobs[k]().then(function(d){ window._gcSet(k, d); }).catch(function(){});
   };
 
+  /* Pre-load Leaflet libraries di background (after 3s) */
+  window._prefetchLeaflet = function() {
+    setTimeout(function() {
+      if (window.L) return; /* sudah loaded */
+      var links = [
+        'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
+        'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css'
+      ];
+      var scripts = [
+        'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js'
+      ];
+      /* Preload CSS */
+      links.forEach(function(href) {
+        if (!document.getElementById('lf-pre-' + href.split('/').pop())) {
+          var link = document.createElement('link');
+          link.rel = 'prefetch';
+          link.href = href;
+          link.id = 'lf-pre-' + href.split('/').pop();
+          document.head.appendChild(link);
+        }
+      });
+      /* Async load first script, trigger rest after */
+      if (!document.querySelector('script[src*="leaflet.min.js"]')) {
+        var s1 = document.createElement('script');
+        s1.src = scripts[0];
+        s1.async = true;
+        document.head.appendChild(s1);
+      }
+    }, 3000);
+  };
+
   /* Prefetch semua data secara waterfall setelah login */
   window._prefetchAll = function() {
     var delay = 2000; /* mulai 2 detik setelah login */
@@ -68,6 +100,8 @@
       }, delay);
       delay += 1200; /* jeda 1.2 detik antar request */
     });
+    /* Juga trigger Leaflet prefetch */
+    window._prefetchLeaflet();
   };
 })();
 </script>

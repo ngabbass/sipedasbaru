@@ -7,6 +7,8 @@ var _inFotos=[],_inMode='manual';
 
 function loadInput(){
   if(SES&&SES.role!=='admin'){toast('Akses ditolak.','er');return;}
+  /* Cleanup maps jika aktif sebelum load halaman lain */
+  if(window._ensureMapCleanup) _ensureMapCleanup();
   setNav('in');setPage('Input Laporan','Tambah laporan baru');sbClose();
   dChart('bar');dChart('dnt');_inFotos=[];_inMode='manual';
   var days=['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
